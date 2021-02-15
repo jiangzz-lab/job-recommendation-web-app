@@ -9,18 +9,40 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GitHubClient {
     private static final String URL_TEMPLATE = "https://jobs.github.com/positions.json?description=%s&lat=%s&long=%s";
     private static final String DEFAULT_KEYWORD = "developer";
+
+    private void extractKeyWords(List<Item> items) {
+        MonkeyLearnClient monkeyLearnClient = new MonkeyLearnClient();
+        List<String> descriptions = new ArrayList<>();
+        for(Item item : items){
+            // deal with a bug of monkey learn API -- cannot resolve "·"
+            String description = item.getDescription().replace("·", " ");
+            descriptions.add(description);
+        }
+
+        // if the description list cannot get a valid keyword list ,use title to extract again
+        List<String> titles = new ArrayList<>();
+        for(Item item : items) {
+            titles.add(item.getTitle());
+        }
+
+        List<Set<String>> keywordList = monkeyLearnClient.extract(descriptions);
+        if (keywordList.isEmpty()) {
+            keywordList = monkeyLearnClient.extract(titles);
+        }
+
+        for(int i = 0; i < keywordList.size(); i++){
+            items.get(i).setKeywords(keywordList.get(i));
+        }
+    }
 
     public List<Item> search(double lat, double lon, String keyword) {
         if (keyword == null) {
@@ -55,7 +77,9 @@ public class GitHubClient {
                     return Collections.emptyList();
                 }
                 ObjectMapper mapper = new ObjectMapper();
-                return Arrays.asList(mapper.readValue(entity.getContent(), Item[].class));
+                List<Item> items = Arrays.asList(mapper.readValue(entity.getContent(), Item[].class));
+                extractKeyWords(items);
+                return items;
             }
         };
 

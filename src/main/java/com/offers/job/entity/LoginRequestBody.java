@@ -1,2 +1,13 @@
-package com.offers.job.entity;public class LoginRequestBody {
+package com.offers.job.entity;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class LoginRequestBody {
+
+    @JsonProperty("user_id")
+    public String userId;
+
+    public String password;
 }
+
+

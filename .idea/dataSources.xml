@@ -5,7 +5,7 @@
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://jupiter-instance.cvayh1fjsabh.us-east-2.rds.amazonaws.com:3306/jupiterdb</jdbc-url>
+      <jdbc-url>jdbc:mysql://laiproject-instance.cvayh1fjsabh.us-east-2.rds.amazonaws.com:3306/laiproject</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
