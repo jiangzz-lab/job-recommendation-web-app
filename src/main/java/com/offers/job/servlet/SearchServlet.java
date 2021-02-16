@@ -17,10 +17,12 @@ import java.util.Set;
 public class SearchServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("receive request");
         response.setContentType("application/json");
         ObjectMapper mapper = new ObjectMapper();
 
         HttpSession session = request.getSession(false);
+        System.out.println(session);
         if (session == null) {
             response.setStatus(403);
             mapper.writeValue(response.getWriter(), new ResultResponse("Session Invalid"));
