@@ -18,6 +18,7 @@
         oRegisterForm = document.getElementById('register-form'),
         oRegisterResultField = document.getElementById('register-result'),
         oNearbyBtn = document.getElementById('nearby-btn'),
+        oFavBtn = document.getElementById('fav-btn'),
         oRecommendBtn = document.getElementById('recommend-btn'),
         oNavBtnList = document.getElementsByClassName('main-nav-btn'),
         oItemNav = document.getElementById('item-nav'),
@@ -25,10 +26,11 @@
         oTpl = document.getElementById('tpl').innerHTML;
 
     // default parameters for searching
-    var userId = '1111',
+    let userId = '1111',
         userFullName = 'John',
         lng = -122.08,
-        lat = 37.38;
+        lat = 37.38,
+        itemArr;
 
     const BASE_URL = 'http://localhost:8080/jupiter';
 
@@ -54,8 +56,17 @@
         }, false);
 
         // click login button to login
+        // click register button to register
         oLoginBtn.addEventListener('click', loginExecutor, false);
         oRegisterBtn.addEventListener('click', registerExecutor, false);
+        oLogoutBtn.addEventListener('click', logoutExecutor,false);
+
+        // click nearby button to see nearby items
+        // click favorite button to see favorite items
+        // click recommendation button to see recommended items
+        oNearbyBtn.addEventListener('click', loadNearbyData, false);
+        oFavBtn.addEventListener('click', loadFavoriteItems, false);
+        oRecommendBtn.addEventListener('click',loadRecommendedItems, false);
     }
 
     function switchLoginRegister(name) {
@@ -172,9 +183,34 @@
         }
     }
 
+    function logoutExecutor() {
+        const opt = {
+            method: 'POST',
+            url: BASE_URL + '/logout',
+            success: function(res) {
+                if (res.result === 'OK') {
+                    console.log('log out');
+                    console.log(res);
+                    validateSession();
+                } else {
+                    throw Error('Log out failed!')
+                }
+            },
+            error: function () {
+                throw Error('Log out failed!');
+            }
+        };
+        ajax(opt);
+    }
+
+    /*
+        API -- load nearby data
+     */
+
     function loadNearbyData() {
         // active side bar buttons
         activeBtn('nearby-btn');
+        // GET from /search servlet
         const opt = {
             method: 'GET',
             url: BASE_URL + '/search?user_id=' + userId + '&lat=' + lat + '&lon=' + lng,
@@ -184,6 +220,79 @@
         serverExecutor(opt);
     }
 
+    /*
+        API -- load favorite items
+     */
+    function loadFavoriteItems() {
+        console.log('click loadFav button!');
+        activeBtn('fav-btn');
+        const opt = {
+            method : 'GET',
+            url: BASE_URL + '/history?user_id=' + userId,
+            data: null,
+            message: 'favorite'
+        }
+        serverExecutor(opt);
+    }
+
+    /*
+        API -- load Recommended Items
+     */
+    function loadRecommendedItems() {
+        activeBtn('recommend-btn');
+        const opt = {
+            method: 'GET',
+            url: BASE_URL + '/recommendation?user_id=' + userId
+                + '&lat=' + lat + '&lng=' + lng,
+            data: null,
+            message: 'recommended'
+        }
+        serverExecutor(opt);
+    }
+
+    /*
+        API -- change favorite state of an item
+     */
+    function changeFavoriteItem(evt) {
+        const tar = evt.target,
+            oParent = tar.parentElement;
+
+        if (oParent && oParent.className === 'fav-link') {
+            console.log('change ...');
+            const oCurLi = oParent.parentElement,
+                classname = tar.className,
+                isFavorite = classname === 'fa fa-heart' ?
+                    true : false,
+                oItems = oItemList.getElementsByClassName('item'),
+                index = Array.prototype.indexOf.call(oItems, oCurLi),
+                url = BASE_URL + '/history',
+                req = {
+                    user_id: userId,
+                    favorite: itemArr[index]
+                };
+            const method = !isFavorite ? 'POST' : 'DELETE';
+
+            ajax({
+                method : method,
+                url: url,
+                data: req,
+                success: function (res) {
+                    if (res.status === 'OK' || res.result === 'SUCCESS') {
+                        tar.className = !isFavorite ? 'fa fa-heart' : 'fa fa-heart-o';
+                    } else {
+                        throw new Error('Change Favorite failed!');
+                    }
+                },
+                error: function () {
+                    throw new Error('Change Favorite failed!');
+                }
+            });
+        }
+    }
+
+    /*
+        helper function -- active a button on nav list
+     */
     function activeBtn(btnId) {
         const len = oNavBtnList.length;
         for (let i = 0; i < len; i++) {
@@ -193,6 +302,9 @@
         btn.className += ' active';
     }
 
+    /*
+        helper function -- get data from /search, /recommendation or /history end point
+     */
     function serverExecutor(opt) {
         oItemList.innerHTML = '<p class="notice"> <i class="fa fa-exclamation-triangle"></i>Loading '
             + opt.message + ' item...</p>';
@@ -242,6 +354,8 @@
                 return item[key];
             })
             oItemList.innerHTML = list;
+            const oItemFav = document.getElementById(item['id']);
+            oItemFav.addEventListener('click',changeFavoriteItem);
         }
     }
 
@@ -263,7 +377,27 @@
             return;
         }
         const encodedPwd = md5(username + md5(password));
-        console.log("register" + " " + username + " " + encodedPwd);
+
+        ajax({
+            method: 'POST',
+            url: BASE_URL + '/register',
+            data: {
+                user_id : username,
+                password: encodedPwd,
+                first_name: firstName,
+                last_name: lastName,
+            },
+            success: function (res) {
+                if (res.status === 'OK' || res.result === 'OK') {
+                    oRegisterResultField.innerHTML = 'Successfully registered!';
+                } else{
+                    oRegisterResultField.innerHTML = 'User already exists!';
+                }
+            },
+            error: function () {
+                throw Error('Failed to register the user!');
+            }
+        })
     }
 
     function ajax(opt) {

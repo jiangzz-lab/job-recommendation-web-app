@@ -28,8 +28,6 @@ public class LoginServlet extends HttpServlet {
         if (connection.verifyLogin(body.userId, body.password)) {
             HttpSession session = request.getSession(); // create session, and save to server
             session.setAttribute("user_id", body.userId);
-            System.out.println("logged in");
-            System.out.println(session);
             loginResponseBody = new LoginResponseBody("OK", body.userId, connection.getFullname(body.userId));
         } else {
             loginResponseBody = new LoginResponseBody("Login failed, user id and passcode do not exist.", null, null);

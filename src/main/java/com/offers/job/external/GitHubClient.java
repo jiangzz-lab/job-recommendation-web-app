@@ -16,8 +16,8 @@ import java.net.URLEncoder;
 import java.util.*;
 
 public class GitHubClient {
-    private static final String URL_TEMPLATE = "https://jobs.github.com/positions.json?description=%s&lat=%s&long=%s";
-    private static final String DEFAULT_KEYWORD = "developer";
+    private static final String URL_TEMPLATE = "https://jobs.github.com/positions.json?lat=%s&long=%s";
+ //   private static final String DEFAULT_KEYWORD = "developer";
 
     private void extractKeyWords(List<Item> items) {
         MonkeyLearnClient monkeyLearnClient = new MonkeyLearnClient();
@@ -45,16 +45,14 @@ public class GitHubClient {
     }
 
     public List<Item> search(double lat, double lon, String keyword) {
-        if (keyword == null) {
-            keyword = DEFAULT_KEYWORD;
+        if (keyword != null) {
+            try {
+                keyword = URLEncoder.encode(keyword, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
-
-        try {
-            keyword = URLEncoder.encode(keyword, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        String url = String.format(URL_TEMPLATE, keyword, lat, lon);
+        String url = String.format(URL_TEMPLATE, lat, lon) + (keyword != null ? keyword : "");
 
         CloseableHttpClient httpclient = HttpClients.createDefault();
 

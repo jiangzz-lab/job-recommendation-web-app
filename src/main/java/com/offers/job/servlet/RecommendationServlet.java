@@ -27,10 +27,10 @@ public class RecommendationServlet extends HttpServlet {
 
         String userId = request.getParameter("user_id");
         double lat = Double.parseDouble(request.getParameter("lat"));
-        double lon = Double.parseDouble(request.getParameter("lon"));
+        double lng = Double.parseDouble(request.getParameter("lng"));
 
         Recommendation recommendation = new Recommendation();
-        List<Item> items = recommendation.recommendItems(userId, lat, lon);
+        List<Item> items = recommendation.recommendItems(userId, lat, lng);
 
         mapper.writeValue(response.getWriter(), items);
 
