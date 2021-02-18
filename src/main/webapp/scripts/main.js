@@ -67,6 +67,9 @@
         oNearbyBtn.addEventListener('click', loadNearbyData, false);
         oFavBtn.addEventListener('click', loadFavoriteItems, false);
         oRecommendBtn.addEventListener('click',loadRecommendedItems, false);
+
+        // click favorite icon to change favorite state
+        oItemList.addEventListener('click', changeFavoriteItem, false);
     }
 
     function switchLoginRegister(name) {
@@ -306,7 +309,7 @@
         helper function -- get data from /search, /recommendation or /history end point
      */
     function serverExecutor(opt) {
-        oItemList.innerHTML = '<p class="notice"> <i class="fa fa-exclamation-triangle"></i>Loading '
+        oItemList.innerHTML = '<p class="notice"> <i class="fa fa-spinner"></i>Loading '
             + opt.message + ' item...</p>';
         ajax({
             method: opt.method,
@@ -354,8 +357,6 @@
                 return item[key];
             })
             oItemList.innerHTML = list;
-            const oItemFav = document.getElementById(item['id']);
-            oItemFav.addEventListener('click',changeFavoriteItem);
         }
     }
 
