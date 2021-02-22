@@ -32,7 +32,7 @@
         lat = 37.38,
         itemArr;
 
-    const BASE_URL = 'http://localhost:8080/jupiter';
+    const BASE_URL = '.';
 
     // init
     function init() {
@@ -106,6 +106,51 @@
         ele.style.display = style;
     }
 
+    // show welcome message after login
+    function welComeMsg(info) {
+        userId = info.user_id || userId;
+        userFullName = info.name || userFullName;
+        oWelcomeMg.innerHTML = 'Welcome ' + userFullName;
+
+        // show welcome, avatar, item area, logout btn
+        showOrHideElement(oWelcomeMg, 'block');
+        showOrHideElement(oAvatar, 'block');
+        showOrHideElement(oItemNav, 'block');
+        showOrHideElement(oItemList, 'block');
+        showOrHideElement(oLogoutBtn, 'block');
+
+        // hide login from
+        showOrHideElement(oLoginForm, 'none');
+    }
+
+    // fetch geolocation data
+    function fetchData() {
+        // get geo-location info
+        initGeo(loadNearbyData);
+    }
+
+    function initGeo(cb) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                    // lat = position.coords.latitude || lat
+                    // lng = position.coords.latitude || lng
+                    cb();
+                },
+                function () {
+                    throw new Error('Geo location fetch failed!');
+                }, {
+                    maximumAge: 60000
+                });
+            // show loading message
+            oItemList.innerHTML = '<p class="notice"><i class="fa fa-spinner fa-spin"></i>Retrieving your location...</p>';
+        } else {
+            throw new Error('Your browser does not support navigator!!');
+        }
+    }
+
+    /*
+        API -- login
+     */
     function loginExecutor() {
         console.log('login');
         const username = oLoginUsername.value,
@@ -146,45 +191,55 @@
         })
     }
 
-    function welComeMsg(info) {
-        userId = info.user_id || userId;
-        userFullName = info.name || userFullName;
-        oWelcomeMg.innerHTML = 'Welcome ' + userFullName;
 
-        // show welcome, avatar, item area, logout btn
-        showOrHideElement(oWelcomeMg, 'block');
-        showOrHideElement(oAvatar, 'block');
-        showOrHideElement(oItemNav, 'block');
-        showOrHideElement(oItemList, 'block');
-        showOrHideElement(oLogoutBtn, 'block');
+    /*
+        API -- register
+     */
 
-        // hide login from
-        showOrHideElement(oLoginForm, 'none');
-    }
+    function registerExecutor() {
+        console.log('register');
+        const username = oRegisterUsername.value,
+            password = oRegisterPwd.value,
+            firstName = oRegisterFirstName.value,
+            lastName = oRegisterLastName.value;
+        console.log(username, password, firstName, lastName);
 
-    function fetchData() {
-        // get geo-location info
-        initGeo(loadNearbyData);
-    }
-
-    function initGeo(cb) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function (position) {
-                    // lat = position.coords.latitude || lat
-                    // lng = position.coords.latitude || lng
-                    cb();
-                },
-                function () {
-                    throw new Error('Geo location fetch failed!');
-                }, {
-                    maximumAge: 60000
-                });
-            // show loading message
-            oItemList.innerHTML = '<p class="notice"><i class="fa fa-spinner fa-spin"></i>Retrieving your location...</p>';
-        } else {
-            throw new Error('Your browser does not support navigator!!');
+        if (username === "" || password === "" || firstName === "" || lastName === "") {
+            oRegisterResultField.innerHTML = "Please fill in all fields";
+            return;
         }
+        // validation of the username
+        if (username.match(/^[a-z0-9_]+$/) === null) {
+            oRegisterResultField.innerHTML = 'Invalid username';
+            return;
+        }
+        const encodedPwd = md5(username + md5(password));
+
+        ajax({
+            method: 'POST',
+            url: BASE_URL + '/register',
+            data: {
+                user_id : username,
+                password: encodedPwd,
+                first_name: firstName,
+                last_name: lastName,
+            },
+            success: function (res) {
+                if (res.status === 'OK' || res.result === 'OK') {
+                    oRegisterResultField.innerHTML = 'Successfully registered!';
+                } else{
+                    oRegisterResultField.innerHTML = 'User already exists!';
+                }
+            },
+            error: function () {
+                throw Error('Failed to register the user!');
+            }
+        })
     }
+
+    /*
+        API -- logout
+     */
 
     function logoutExecutor() {
         const opt = {
@@ -293,6 +348,8 @@
         }
     }
 
+
+
     /*
         helper function -- active a button on nav list
      */
@@ -333,7 +390,7 @@
     }
 
     /*
-        Render data
+        helper function -- Render data
      */
     function render(data) {
         const len = data.length;
@@ -360,46 +417,9 @@
         }
     }
 
-    function registerExecutor() {
-        console.log('register');
-        const username = oRegisterUsername.value,
-            password = oRegisterPwd.value,
-            firstName = oRegisterFirstName.value,
-            lastName = oRegisterLastName.value;
-        console.log(username, password, firstName, lastName);
-
-        if (username === "" || password === "" || firstName === "" || lastName === "") {
-            oRegisterResultField.innerHTML = "Please fill in all fields";
-            return;
-        }
-        // validation of the username
-        if (username.match(/^[a-z0-9_]+$/) === null) {
-            oRegisterResultField.innerHTML = 'Invalid username';
-            return;
-        }
-        const encodedPwd = md5(username + md5(password));
-
-        ajax({
-            method: 'POST',
-            url: BASE_URL + '/register',
-            data: {
-                user_id : username,
-                password: encodedPwd,
-                first_name: firstName,
-                last_name: lastName,
-            },
-            success: function (res) {
-                if (res.status === 'OK' || res.result === 'OK') {
-                    oRegisterResultField.innerHTML = 'Successfully registered!';
-                } else{
-                    oRegisterResultField.innerHTML = 'User already exists!';
-                }
-            },
-            error: function () {
-                throw Error('Failed to register the user!');
-            }
-        })
-    }
+    /*
+        helper function -- make ajax call
+     */
 
     function ajax(opt) {
         opt = opt || {};
